@@ -54,7 +54,7 @@ export function FlashcardMode({
       });
       setCardDirections(directions);
     }
-  }, [words.length, direction]);
+  }, [words.length, words, direction, cardDirections.length]);
 
   // 현재 카드의 방향을 메모이제이션하여 안정적으로 유지
   const showEnglishFirst = useMemo(() => {

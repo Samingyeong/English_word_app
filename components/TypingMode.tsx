@@ -51,7 +51,7 @@ export function TypingMode({ words, day, direction, onComplete }: TypingModeProp
       });
       setCardDirections(directions);
     }
-  }, [words.length, direction]);
+  }, [words.length, words, direction, cardDirections.length]);
 
   // 현재 카드의 방향을 메모이제이션하여 안정적으로 유지
   const showEnglishFirst = useMemo(() => {
@@ -114,7 +114,7 @@ export function TypingMode({ words, day, direction, onComplete }: TypingModeProp
     } else {
       // 한글 → 영어: 한글 뜻을 보고 영어 단어 입력
       userAnswer = input.trim().toLowerCase();
-      correctAnswer = currentWord.english.trim().toLowerCase();
+      const correctAnswer = currentWord.english.trim().toLowerCase();
       isAnswerCorrect = userAnswer === correctAnswer;
     }
 
