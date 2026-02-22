@@ -9,6 +9,7 @@ import {
   removeWordSet,
 } from "@/lib/storage";
 import { parseExcelFile } from "@/lib/excelParser";
+import { exportWordsToExcel } from "@/lib/excelExport";
 import { DayCard } from "@/components/DayCard";
 import { FlashcardMode } from "@/components/FlashcardMode";
 import { TypingMode } from "@/components/TypingMode";
@@ -17,7 +18,7 @@ import { WrongAnswersList } from "@/components/WrongAnswersList";
 import { WordEditor } from "@/components/WordEditor";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, ArrowLeft, BookOpen, Plus, Edit } from "lucide-react";
+import { Upload, ArrowLeft, BookOpen, Plus, Edit, Download } from "lucide-react";
 
 export default function Home() {
   const [wordSets, setWordSets] = useState<WordSet[]>([]);
@@ -246,14 +247,28 @@ export default function Home() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             뒤로가기
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => setIsEditingWordSet(true)}
-            size="sm"
-          >
-            <Edit className="mr-2 h-4 w-4" />
-            편집
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={async () => {
+                if (selectedWordSet) {
+                  await exportWordsToExcel(selectedWordSet.words, `${selectedWordSet.name}.xlsx`);
+                }
+              }}
+              size="sm"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              엑셀 다운로드
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditingWordSet(true)}
+              size="sm"
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              편집
+            </Button>
+          </div>
         </div>
 
         <div className="mb-8 text-center">
