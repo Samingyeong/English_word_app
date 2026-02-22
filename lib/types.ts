@@ -22,6 +22,6 @@ export interface WrongAnswer {
   lastWrongAt: string;
 }
 
-export type StudyMode = "flashcard" | "typing";
+export type StudyMode = "flashcard" | "typing" | "matching";
 export type FlashcardDirection = "en-to-ko" | "ko-to-en" | "random";
 

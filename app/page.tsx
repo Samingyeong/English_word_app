@@ -12,10 +12,12 @@ import { parseExcelFile } from "@/lib/excelParser";
 import { DayCard } from "@/components/DayCard";
 import { FlashcardMode } from "@/components/FlashcardMode";
 import { TypingMode } from "@/components/TypingMode";
+import { MatchingMode } from "@/components/MatchingMode";
 import { WrongAnswersList } from "@/components/WrongAnswersList";
+import { WordEditor } from "@/components/WordEditor";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, ArrowLeft, BookOpen } from "lucide-react";
+import { Upload, ArrowLeft, BookOpen, Plus, Edit } from "lucide-react";
 
 export default function Home() {
   const [wordSets, setWordSets] = useState<WordSet[]>([]);
@@ -24,6 +26,8 @@ export default function Home() {
   const [studyMode, setStudyMode] = useState<StudyMode | null>(null);
   const [flashcardDirection, setFlashcardDirection] = useState<FlashcardDirection>("en-to-ko");
   const [isUploading, setIsUploading] = useState(false);
+  const [isCreatingWordSet, setIsCreatingWordSet] = useState(false);
+  const [isEditingWordSet, setIsEditingWordSet] = useState(false);
 
   useEffect(() => {
     setWordSets(loadWordSets());
@@ -126,18 +130,131 @@ export default function Home() {
     }
   };
 
-  // 학습 모드 선택 화면
-  if (selectedWordSet && !studyMode) {
+  const handleRenameWordSet = (wordSetId: string, newName: string) => {
+    const existingSets = loadWordSets();
+    const updatedSets = existingSets.map((ws) =>
+      ws.id === wordSetId ? { ...ws, name: newName } : ws
+    );
+    saveWordSets(updatedSets);
+    setWordSets(updatedSets);
+    // 선택된 단어장이 변경된 경우 업데이트
+    if (selectedWordSet && selectedWordSet.id === wordSetId) {
+      setSelectedWordSet({ ...selectedWordSet, name: newName });
+    }
+    alert("단어장 이름이 변경되었습니다!");
+  };
+
+  const handleCreateWordSet = (words: Word[], name?: string) => {
+    const existingSets = loadWordSets();
+    const nextDay = existingSets.length > 0 
+      ? Math.max(...existingSets.map(s => s.day)) + 1 
+      : 1;
+
+    const newWordSet: WordSet = {
+      id: `wordset-${Date.now()}`,
+      day: nextDay,
+      name: name || `Day ${nextDay} 단어장`,
+      words,
+      createdAt: new Date().toISOString(),
+    };
+
+    const updatedSets = [...existingSets, newWordSet];
+    saveWordSets(updatedSets);
+    setWordSets(updatedSets);
+    setIsCreatingWordSet(false);
+    alert(`${newWordSet.name}이(가) 생성되었습니다! (${words.length}개 단어)`);
+  };
+
+  const handleEditWordSet = (words: Word[]) => {
+    if (!selectedWordSet) return;
+
+    const updatedWordSet: WordSet = {
+      ...selectedWordSet,
+      words,
+    };
+
+    const existingSets = loadWordSets();
+    const updatedSets = existingSets.map((ws) =>
+      ws.id === selectedWordSet.id ? updatedWordSet : ws
+    );
+
+    saveWordSets(updatedSets);
+    setWordSets(updatedSets);
+    setSelectedWordSet(updatedWordSet);
+    setIsEditingWordSet(false);
+    alert(`단어장이 수정되었습니다! (${words.length}개 단어)`);
+  };
+
+  // 단어장 편집 화면
+  if (isEditingWordSet && selectedWordSet) {
     return (
       <div className="container mx-auto px-4 py-8">
         <Button
           variant="ghost"
-          onClick={() => setSelectedWordSet(null)}
+          onClick={() => {
+            setIsEditingWordSet(false);
+            setSelectedWordSet(null);
+          }}
           className="mb-6"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           뒤로가기
         </Button>
+        <WordEditor
+          words={selectedWordSet.words}
+          onSave={handleEditWordSet}
+          onCancel={() => {
+            setIsEditingWordSet(false);
+            setSelectedWordSet(null);
+          }}
+        />
+      </div>
+    );
+  }
+
+  // 새 단어장 생성 화면
+  if (isCreatingWordSet) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Button
+          variant="ghost"
+          onClick={() => setIsCreatingWordSet(false)}
+          className="mb-6"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          뒤로가기
+        </Button>
+        <WordEditor
+          words={[]}
+          onSave={handleCreateWordSet}
+          onCancel={() => setIsCreatingWordSet(false)}
+          isNew={true}
+        />
+      </div>
+    );
+  }
+
+  // 학습 모드 선택 화면
+  if (selectedWordSet && !studyMode) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <Button
+            variant="ghost"
+            onClick={() => setSelectedWordSet(null)}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            뒤로가기
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setIsEditingWordSet(true)}
+            size="sm"
+          >
+            <Edit className="mr-2 h-4 w-4" />
+            편집
+          </Button>
+        </div>
 
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-3">
@@ -214,6 +331,25 @@ export default function Home() {
               </div>
             </CardContent>
           </Card>
+
+          <Card
+            className="cursor-pointer transition-all hover:scale-105 hover:shadow-lg"
+            onClick={() => setStudyMode("matching")}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                  <span className="text-2xl">🎯</span>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-semibold">매칭 모드</h3>
+                  <p className="text-sm text-gray-500">
+                    한국어와 영어를 매칭해서 없애요
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -246,6 +382,14 @@ export default function Home() {
             words={shuffleArray(selectedWordSet.words)}
             day={selectedWordSet.day}
             direction={flashcardDirection}
+            onComplete={handleStudyComplete}
+          />
+        )}
+
+        {studyMode === "matching" && (
+          <MatchingMode
+            words={shuffleArray(selectedWordSet.words)}
+            day={selectedWordSet.day}
             onComplete={handleStudyComplete}
           />
         )}
@@ -289,9 +433,18 @@ export default function Home() {
       </Card>
 
       {/* Day별 단어장 목록 */}
-      {wordSets.length > 0 && (
-        <div className="mb-8">
-          <h2 className="mb-4 text-3xl font-bold text-gray-900">단어장 목록</h2>
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-3xl font-bold text-gray-900">단어장 목록</h2>
+          <Button
+            onClick={() => setIsCreatingWordSet(true)}
+            size="sm"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            새 단어장 만들기
+          </Button>
+        </div>
+        {wordSets.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {wordSets.map((wordSet) => (
               <DayCard
@@ -299,11 +452,23 @@ export default function Home() {
                 wordSet={wordSet}
                 onClick={() => handleDayClick(wordSet)}
                 onDelete={handleDeleteWordSet}
+                onRename={handleRenameWordSet}
               />
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <BookOpen className="h-16 w-16 text-gray-300 mb-4" />
+              <p className="text-gray-500 mb-4">아직 단어장이 없습니다.</p>
+              <Button onClick={() => setIsCreatingWordSet(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                첫 번째 단어장 만들기
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {/* 오답 목록 */}
       <div className="mb-8">

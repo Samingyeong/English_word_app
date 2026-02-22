@@ -2,19 +2,28 @@
 
 import { WordSet } from "@/lib/types";
 import { Card, CardContent } from "./ui/card";
-import { BookOpen, Trash2 } from "lucide-react";
+import { BookOpen, Trash2, Edit } from "lucide-react";
 
 interface DayCardProps {
   wordSet: WordSet;
   onClick: () => void;
   onDelete: (wordSetId: string) => void;
+  onRename: (wordSetId: string, newName: string) => void;
 }
 
-export function DayCard({ wordSet, onClick, onDelete }: DayCardProps) {
+export function DayCard({ wordSet, onClick, onDelete, onRename }: DayCardProps) {
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation(); // 카드 클릭 이벤트 전파 방지
     if (confirm(`Day ${wordSet.day} 단어장을 삭제하시겠습니까?`)) {
       onDelete(wordSet.id);
+    }
+  };
+
+  const handleRename = (e: React.MouseEvent) => {
+    e.stopPropagation(); // 카드 클릭 이벤트 전파 방지
+    const newName = prompt("단어장 이름을 입력하세요:", wordSet.name);
+    if (newName && newName.trim() && newName !== wordSet.name) {
+      onRename(wordSet.id, newName.trim());
     }
   };
 
@@ -37,13 +46,22 @@ export function DayCard({ wordSet, onClick, onDelete }: DayCardProps) {
               {wordSet.words.length}개 단어
             </p>
           </div>
-          <button
-            onClick={handleDelete}
-            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-            title="단어장 삭제"
-          >
-            <Trash2 className="h-5 w-5" />
-          </button>
+          <div className="flex gap-1">
+            <button
+              onClick={handleRename}
+              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              title="단어장 이름 변경"
+            >
+              <Edit className="h-5 w-5" />
+            </button>
+            <button
+              onClick={handleDelete}
+              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              title="단어장 삭제"
+            >
+              <Trash2 className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       </CardContent>
     </Card>

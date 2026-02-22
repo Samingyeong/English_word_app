@@ -96,19 +96,27 @@ export function TypingMode({ words, day, direction, onComplete }: TypingModeProp
     if (!currentWord) return;
 
     let userAnswer: string;
-    let correctAnswer: string;
+    let correctAnswers: string[];
+    let isAnswerCorrect: boolean;
 
     if (showEnglishFirst) {
       // 영어 → 한글: 영어 단어를 보고 한글 뜻 입력
       userAnswer = input.trim();
-      correctAnswer = currentWord.korean.trim();
+      // 쉼표로 구분된 여러 뜻을 배열로 변환
+      correctAnswers = currentWord.korean
+        .split(",")
+        .map((meaning) => meaning.trim())
+        .filter((meaning) => meaning.length > 0);
+      // 여러 뜻 중 하나라도 일치하면 정답
+      isAnswerCorrect = correctAnswers.some(
+        (answer) => answer === userAnswer
+      );
     } else {
       // 한글 → 영어: 한글 뜻을 보고 영어 단어 입력
       userAnswer = input.trim().toLowerCase();
       correctAnswer = currentWord.english.trim().toLowerCase();
+      isAnswerCorrect = userAnswer === correctAnswer;
     }
-
-    const isAnswerCorrect = userAnswer === correctAnswer;
 
     setIsCorrect(isAnswerCorrect);
     setShowResult(true);
@@ -210,8 +218,15 @@ export function TypingMode({ words, day, direction, onComplete }: TypingModeProp
                     </div>
                     <p className="text-base">
                       정답: <span className="font-bold text-xl">
-                        {showEnglishFirst ? currentWord?.korean : currentWord?.english}
+                        {showEnglishFirst 
+                          ? currentWord?.korean 
+                          : currentWord?.english}
                       </span>
+                      {showEnglishFirst && currentWord?.korean.includes(",") && (
+                        <span className="block text-sm text-gray-600 mt-1">
+                          (여러 뜻 중 하나만 입력해도 정답입니다)
+                        </span>
+                      )}
                     </p>
                   </div>
                 )}
