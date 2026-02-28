@@ -74,10 +74,10 @@ export function FlashcardMode({
     return (
       <div className="flex flex-col items-center justify-center space-y-6 py-12">
         <div className="text-center">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
+          <h2 className="text-4xl font-bold text-white mb-4">
             학습 완료! 🎉
           </h2>
-          <p className="text-xl font-semibold text-gray-700">
+          <p className="text-xl font-semibold text-gray-300">
             정답률: {Math.round((correctCount / words.length) * 100)}% (
             {correctCount}/{words.length})
           </p>
@@ -121,7 +121,7 @@ export function FlashcardMode({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
-        <span className="text-base font-semibold text-gray-700 whitespace-nowrap">
+        <span className="text-base font-semibold text-gray-300 whitespace-nowrap">
           {currentIndex + 1} / {words.length}
         </span>
         <div className="h-3 w-full max-w-xs rounded-full bg-gray-300">

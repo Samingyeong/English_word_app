@@ -21,8 +21,7 @@ export function WrongAnswersList({
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <BookOpen className="h-16 w-16 text-gray-300 mb-4" />
-          <p className="text-gray-500">오답이 없습니다. 모두 정답이에요! 🎉</p>
+          <p className="text-gray-600 font-medium">오답이 없습니다. 모두 정답이에요! 🎉</p>
         </CardContent>
       </Card>
     );
@@ -31,7 +30,7 @@ export function WrongAnswersList({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-2xl font-bold text-gray-900">
+        <h3 className="text-2xl font-bold text-white">
           오답 단어 ({wrongAnswers.length}개)
         </h3>
         <Button onClick={() => onStudy(wrongAnswers)} size="sm">

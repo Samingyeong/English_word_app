@@ -2,16 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Among Us crewmate palette (참고: Crewmate Model 스펙) */
 :root {
-  --background: #f8f9fa;
+  --crewmate-red: #df3434;
+  --crewmate-lime: #93da5c;
+  --crewmate-cyan: #10bfd4;
+  --crewmate-yellow: #eed866;
+  --crewmate-orange: #f08c30;
+  --crewmate-pink: #fa81c9;
+  --visor-blue: #b4e2f5;
+  --crewmate-stroke: #000000;
+  --bg-space: #2d2d35;
+  --bg-card: #f3f3f3;
+  --background: #2d2d35;
   --foreground: #1a1a1a;
+  --text-on-dark: #f3f3f3;
+  --text-muted: #9ca3af;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.6;
+  min-height: 100vh;
 }
 
 @layer utilities {

@@ -152,8 +152,8 @@ export function MatchingMode({
     return (
       <div className="flex flex-col items-center justify-center space-y-6 py-12">
         <div className="text-center">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">학습 완료! 🎉</h2>
-          <p className="text-xl font-semibold text-gray-700 mb-2">
+          <h2 className="text-4xl font-bold text-white mb-4">학습 완료! 🎉</h2>
+          <p className="text-xl font-semibold text-gray-300 mb-2">
             정답률: {accuracy}% ({correctCount}/{totalCount})
           </p>
           {wrongCount > 0 && (
@@ -173,7 +173,7 @@ export function MatchingMode({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
-        <span className="text-base font-semibold text-gray-700 whitespace-nowrap">
+        <span className="text-base font-semibold text-gray-300 whitespace-nowrap">
           {correctCount} / {words.length}
         </span>
         <div className="h-3 w-full max-w-xs rounded-full bg-gray-300">
@@ -186,7 +186,7 @@ export function MatchingMode({
 
       <div className="grid grid-cols-2 gap-6 min-h-[500px]">
         <div className="space-y-4">
-          <h3 className="text-xl font-bold text-center text-gray-900 mb-4">
+          <h3 className="text-xl font-bold text-center text-white mb-4">
             한국어
           </h3>
           <div className="grid grid-cols-1 gap-3">
@@ -224,7 +224,7 @@ export function MatchingMode({
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-xl font-bold text-center text-gray-900 mb-4">
+          <h3 className="text-xl font-bold text-center text-white mb-4">
             영어
           </h3>
           <div className="grid grid-cols-1 gap-3">

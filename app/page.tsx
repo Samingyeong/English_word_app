@@ -16,6 +16,7 @@ import { parsePdfFile } from "@/lib/pdfParser";
 import { parseCsvFile } from "@/lib/csvParser";
 import { exportWordsToExcel } from "@/lib/excelExport";
 import { DayCard } from "@/components/DayCard";
+import { CrewmateIcon } from "@/components/CrewmateIcon";
 import { FlashcardMode } from "@/components/FlashcardMode";
 import { TypingMode } from "@/components/TypingMode";
 import { MatchingMode } from "@/components/MatchingMode";
@@ -337,23 +338,23 @@ export default function Home() {
         </div>
 
         <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">
+          <h1 className="text-4xl font-bold text-white mb-3">
             {selectedWordSet.name}
           </h1>
-          <p className="text-lg font-semibold text-gray-700">
+          <p className="text-lg font-semibold text-gray-300">
             {selectedWordSet.words.length}개 단어
           </p>
         </div>
 
         <div className="flex flex-col gap-4 max-w-md mx-auto">
           <Card
-            className="cursor-pointer transition-all hover:scale-105 hover:shadow-lg"
+            className="cursor-pointer transition-all hover:scale-[1.02] hover:shadow-[6px_6px_0_0_#000] border-2 border-crewmate-cyan"
             onClick={() => setStudyMode("flashcard")}
           >
             <CardContent className="p-6">
               <div className="flex items-center gap-4 mb-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-                  <BookOpen className="h-6 w-6 text-blue-600" />
+                <div className="flex h-12 w-12 items-center justify-center">
+                  <CrewmateIcon color="cyan" size={48} />
                 </div>
                 <div className="flex-1">
                   <h3 className="text-xl font-semibold">플래시카드 모드</h3>
@@ -369,7 +370,7 @@ export default function Home() {
                 <select
                   value={flashcardDirection}
                   onChange={(e) => setFlashcardDirection(e.target.value as FlashcardDirection)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-base font-medium text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-xl text-base font-medium text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-crewmate-cyan focus:border-crewmate-cyan"
                 >
                   <option value="en-to-ko">영어 → 한글</option>
                   <option value="ko-to-en">한글 → 영어</option>
@@ -380,13 +381,13 @@ export default function Home() {
           </Card>
 
           <Card
-            className="cursor-pointer transition-all hover:scale-105 hover:shadow-lg"
+            className="cursor-pointer transition-all hover:scale-[1.02] hover:shadow-[6px_6px_0_0_#000] border-2 border-crewmate-lime"
             onClick={() => setStudyMode("typing")}
           >
             <CardContent className="p-6">
               <div className="flex items-center gap-4 mb-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">
-                  <span className="text-2xl">⌨️</span>
+                <div className="flex h-12 w-12 items-center justify-center">
+                  <CrewmateIcon color="lime" size={48} />
                 </div>
                 <div className="flex-1">
                   <h3 className="text-xl font-semibold">직접 입력 모드</h3>
@@ -402,7 +403,7 @@ export default function Home() {
                 <select
                   value={flashcardDirection}
                   onChange={(e) => setFlashcardDirection(e.target.value as FlashcardDirection)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-base font-medium text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-xl text-base font-medium text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-crewmate-lime focus:border-crewmate-lime"
                 >
                   <option value="en-to-ko">영어 → 한글</option>
                   <option value="ko-to-en">한글 → 영어</option>
@@ -413,13 +414,13 @@ export default function Home() {
           </Card>
 
           <Card
-            className="cursor-pointer transition-all hover:scale-105 hover:shadow-lg"
+            className="cursor-pointer transition-all hover:scale-[1.02] hover:shadow-[6px_6px_0_0_#000] border-2 border-crewmate-orange"
             onClick={() => setStudyMode("matching")}
           >
             <CardContent className="p-6">
               <div className="flex items-center gap-4 mb-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-                  <span className="text-2xl">🎯</span>
+                <div className="flex h-12 w-12 items-center justify-center">
+                  <CrewmateIcon color="orange" size={48} />
                 </div>
                 <div className="flex-1">
                   <h3 className="text-xl font-semibold">매칭 모드</h3>
@@ -484,21 +485,25 @@ export default function Home() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 text-center">
-        <h1 className="text-5xl font-bold text-gray-900 mb-3">
-          영단어 암기 앱 📚
-        </h1>
-        <p className="text-lg font-medium text-gray-700">엑셀 또는 PDF 단어장을 업로드하고 공부해보세요!</p>
+        <div className="flex items-center justify-center gap-3 mb-3">
+          <CrewmateIcon color="red" size={56} />
+          <h1 className="text-4xl md:text-5xl font-extrabold text-white drop-shadow-[2px_2px_0_#000]">
+          WORD IMPOSTER
+          </h1>
+          <CrewmateIcon color="cyan" size={56} />
+        </div>
+        <p className="text-lg font-medium text-gray-300">엑셀·PDF 단어장을 올리고 크루와 함께 외워보세요!</p>
       </div>
 
       {/* 파일 업로드 */}
-      <Card className="mb-8">
+      <Card className="mb-8 border-2 border-dashed border-crewmate-cyan/50 hover:border-crewmate-cyan transition-colors">
         <CardContent className="p-6">
-          <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-8 transition-colors hover:border-blue-400">
-            <Upload className="mb-4 h-12 w-12 text-gray-400" />
+          <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-crewmate-cyan/60 p-8 transition-all hover:bg-crewmate-cyan/5 hover:border-crewmate-cyan">
+            <Upload className="mb-4 h-12 w-12 text-crewmate-cyan" />
             <span className="mb-2 text-xl font-bold text-gray-900">
               엑셀 / CSV / PDF 업로드
             </span>
-            <span className="text-base font-medium text-gray-700">
+            <span className="text-base font-medium text-gray-600 text-center">
               엑셀·CSV: 1열 영어, 2열 한글 · PDF: 번호. 영단어 한글뜻 형식
             </span>
             <input
@@ -509,7 +514,7 @@ export default function Home() {
               className="hidden"
             />
             {isUploading && (
-              <p className="mt-2 text-sm text-blue-600">업로드 중...</p>
+              <p className="mt-2 text-sm text-crewmate-cyan font-semibold">업로드 중...</p>
             )}
           </label>
         </CardContent>
@@ -518,7 +523,10 @@ export default function Home() {
       {/* Day별 단어장 목록 */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <h2 className="text-3xl font-bold text-gray-900">단어장 목록</h2>
+          <h2 className="text-3xl font-bold text-white flex items-center gap-2">
+            <span className="w-2 h-8 bg-crewmate-lime rounded-full" />
+            단어장 목록
+          </h2>
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -543,10 +551,11 @@ export default function Home() {
         </div>
         {wordSets.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {wordSets.map((wordSet) => (
+            {wordSets.map((wordSet, index) => (
               <DayCard
                 key={wordSet.id}
                 wordSet={wordSet}
+                index={index}
                 onClick={() => handleDayClick(wordSet)}
                 onDelete={handleDeleteWordSet}
                 onRename={handleRenameWordSet}
@@ -556,8 +565,8 @@ export default function Home() {
         ) : (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
-              <BookOpen className="h-16 w-16 text-gray-300 mb-4" />
-              <p className="text-gray-500 mb-4">아직 단어장이 없습니다.</p>
+              <CrewmateIcon color="yellow" size={80} className="mb-4" />
+              <p className="text-gray-600 mb-4 font-medium">아직 단어장이 없어요. 크루를 모아볼까요?</p>
               <Button onClick={() => setIsCreatingWordSet(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 첫 번째 단어장 만들기
@@ -569,7 +578,10 @@ export default function Home() {
 
       {/* 오답 목록 */}
       <div className="mb-8">
-        <h2 className="mb-4 text-3xl font-bold text-gray-900">오답 관리</h2>
+        <h2 className="mb-4 text-3xl font-bold text-white flex items-center gap-2">
+          <span className="w-2 h-8 bg-crewmate-orange rounded-full" />
+          오답 관리
+        </h2>
         <WrongAnswersList
           wrongAnswers={wrongAnswers}
           onRemove={handleRemoveWrongAnswer}
