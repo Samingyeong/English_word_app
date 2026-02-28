@@ -4,7 +4,7 @@
  * 어몽어스 크루 메이트 아이콘 (제공 SVG 경로 기반)
  * 원본 캐릭터 비율·윤곽·비저 유지, body 색상만 prop으로 변경.
  */
-const CREWMATE_COLORS: Record<string, string> = {
+export const CREWMATE_COLORS: Record<string, string> = {
   red: "#DF3434",
   lime: "#93DA5C",
   cyan: "#10BFD4",

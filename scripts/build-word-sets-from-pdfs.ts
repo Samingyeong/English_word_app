@@ -28,7 +28,13 @@ async function extractTextFromPdf(filePath: string): Promise<string> {
   return fullText;
 }
 
-function createWordSet(name: string, words: Word[], day: number): WordSet {
+function createWordSet(
+  name: string,
+  words: Word[],
+  day: number,
+  /** 빌드 시 동일 단어장 식별용. 파일명 기반으로 고정 */
+  assetKey: string
+): WordSet {
   return {
     id: `wordset-${name.replace(/\s+/g, "-")}-${Date.now()}`,
     day,
@@ -38,6 +44,7 @@ function createWordSet(name: string, words: Word[], day: number): WordSet {
       id: `word-${day}-${i}-${Date.now()}`,
     })),
     createdAt: new Date().toISOString(),
+    assetKey,
   };
 }
 
@@ -63,6 +70,7 @@ async function main() {
   for (const file of csvFiles) {
     const filePath = path.join(WORD_ASSETS_DIR, file);
     const name = file.replace(/\.csv$/i, "").trim();
+    const assetKey = name;
     console.log("처리 중 (CSV):", file);
     try {
       const content = fs.readFileSync(filePath, "utf-8");
@@ -71,7 +79,7 @@ async function main() {
         console.warn("  -> 단어를 찾지 못함, 건너뜀");
         continue;
       }
-      wordSets.push(createWordSet(name, words, day));
+      wordSets.push(createWordSet(name, words, day, assetKey));
       console.log("  ->", words.length, "개 단어");
       day += 1;
     } catch (err) {
@@ -81,7 +89,8 @@ async function main() {
 
   for (const file of pdfFiles) {
     const filePath = path.join(WORD_ASSETS_DIR, file);
-    const name = file.replace(/\.pdf$/i, "");
+    const name = file.replace(/\.pdf$/i, "").trim();
+    const assetKey = name;
     console.log("처리 중:", file);
     try {
       const text = await extractTextFromPdf(filePath);
@@ -90,7 +99,7 @@ async function main() {
         console.warn("  -> 단어를 찾지 못함, 건너뜀");
         continue;
       }
-      wordSets.push(createWordSet(name, words, day));
+      wordSets.push(createWordSet(name, words, day, assetKey));
       console.log("  ->", words.length, "개 단어");
       day += 1;
     } catch (err) {

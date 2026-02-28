@@ -2,8 +2,8 @@
 
 import { WordSet } from "@/lib/types";
 import { Card, CardContent } from "./ui/card";
-import { CrewmateIcon, CREWMATE_COLOR_KEYS } from "./CrewmateIcon";
-import { Trash2, Edit } from "lucide-react";
+import { CrewmateIcon, CREWMATE_COLOR_KEYS, CREWMATE_COLORS } from "./CrewmateIcon";
+import { Trash2, Edit, ChevronRight } from "lucide-react";
 
 interface DayCardProps {
   wordSet: WordSet;
@@ -11,14 +11,27 @@ interface DayCardProps {
   onClick: () => void;
   onDelete: (wordSetId: string) => void;
   onRename: (wordSetId: string, newName: string) => void;
+  /** 여러 개 삭제 모드일 때 체크박스 표시 및 선택 여부 */
+  selectionMode?: boolean;
+  selected?: boolean;
+  onToggleSelect?: () => void;
 }
 
-export function DayCard({ wordSet, index = 0, onClick, onDelete, onRename }: DayCardProps) {
+export function DayCard({
+  wordSet,
+  index = 0,
+  onClick,
+  onDelete,
+  onRename,
+  selectionMode = false,
+  selected = false,
+  onToggleSelect,
+}: DayCardProps) {
   const crewmateColor = CREWMATE_COLOR_KEYS[index % CREWMATE_COLOR_KEYS.length];
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm(`Day ${wordSet.day} 단어장을 삭제하시겠습니까?`)) {
+    if (confirm(`"${wordSet.name}" 단어장을 삭제하시겠습니까?`)) {
       onDelete(wordSet.id);
     }
   };
@@ -31,44 +44,79 @@ export function DayCard({ wordSet, index = 0, onClick, onDelete, onRename }: Day
     }
   };
 
+  const handleCardClick = () => {
+    if (selectionMode && onToggleSelect) {
+      onToggleSelect();
+    } else {
+      onClick();
+    }
+  };
+
   return (
     <Card
-      className="cursor-pointer transition-all hover:scale-[1.02] hover:shadow-[6px_6px_0_0_#000] relative border-2 border-black"
-      onClick={onClick}
+      className={`bg-bg-card border-2 rounded-xl shadow-[4px_4px_0_0_#000] transition-all relative overflow-hidden group ${
+        selectionMode
+          ? `cursor-pointer border-black hover:shadow-[6px_6px_0_0_#000] ${selected ? "ring-2 ring-crewmate-cyan ring-offset-2" : ""}`
+          : "cursor-pointer border-black hover:shadow-[6px_6px_0_0_#000] hover:scale-[1.02]"
+      }`}
+      onClick={handleCardClick}
     >
-      <CardContent className="p-6">
-        <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center">
-            <CrewmateIcon color={crewmateColor} size={56} />
+      <span
+        className="absolute left-0 top-0 bottom-0 w-1.5 opacity-90"
+        style={{ background: CREWMATE_COLORS[crewmateColor] ?? CREWMATE_COLORS.red }}
+        aria-hidden
+      />
+      <CardContent className="p-5 pl-6">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            {selectionMode ? (
+              <div className="flex-shrink-0 flex items-center justify-center w-10 h-10">
+                <input
+                  type="checkbox"
+                  checked={selected}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    onToggleSelect?.();
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-5 h-5 rounded border-gray-400 text-crewmate-cyan focus:ring-crewmate-cyan"
+                />
+              </div>
+            ) : (
+              <div className="flex-shrink-0">
+                <CrewmateIcon color={crewmateColor} size={40} />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-gray-900 truncate group-hover:text-crewmate-cyan transition-colors">
+                {wordSet.name}
+              </h3>
+              <p className="text-sm text-gray-600 mt-0.5">
+                {wordSet.words.length}개 단어
+              </p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-2xl font-bold text-gray-900">
-              Day {wordSet.day}
-            </h3>
-            <p className="text-sm font-medium text-gray-700 truncate">{wordSet.name}</p>
-            <p className="mt-1 text-xs font-medium text-gray-600">
-              {wordSet.words.length}개 단어
-            </p>
-          </div>
-          <div className="flex gap-1 flex-shrink-0">
-            <button
-              onClick={handleRename}
-              className="p-2 text-gray-500 hover:text-crewmate-cyan hover:bg-crewmate-cyan/10 rounded-lg transition-colors border border-transparent hover:border-crewmate-cyan"
-              title="단어장 이름 변경"
-            >
-              <Edit className="h-5 w-5" />
-            </button>
-            <button
-              onClick={handleDelete}
-              className="p-2 text-gray-500 hover:text-crewmate-red hover:bg-crewmate-red/10 rounded-lg transition-colors border border-transparent hover:border-crewmate-red"
-              title="단어장 삭제"
-            >
-              <Trash2 className="h-5 w-5" />
-            </button>
-          </div>
+          {!selectionMode && (
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <button
+                onClick={handleRename}
+                className="p-1.5 text-gray-500 hover:text-crewmate-cyan hover:bg-crewmate-cyan/10 rounded-lg transition-colors"
+                title="이름 변경"
+              >
+                <Edit className="h-4 w-4" />
+              </button>
+              <button
+                onClick={handleDelete}
+                className="p-1.5 text-gray-500 hover:text-crewmate-red hover:bg-crewmate-red/10 rounded-lg transition-colors"
+                title="삭제"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+              <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-crewmate-cyan transition-colors" />
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
   );
 }
-

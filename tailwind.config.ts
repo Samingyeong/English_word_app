@@ -10,6 +10,7 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ["var(--font-nunito)", "system-ui", "sans-serif"],
+        display: ["var(--font-orbitron)", "var(--font-nunito)", "sans-serif"],
       },
       colors: {
         background: "var(--background)",
@@ -23,6 +24,26 @@ const config: Config = {
         "visor-blue": "var(--visor-blue)",
         "bg-space": "var(--bg-space)",
         "bg-card": "var(--bg-card)",
+        "quizlet-bg": "var(--quizlet-bg)",
+        "quizlet-card": "var(--quizlet-card)",
+        "quizlet-border": "var(--quizlet-border)",
+        "quizlet-primary": "var(--quizlet-primary)",
+        "quizlet-text": "var(--quizlet-text)",
+        "quizlet-text-secondary": "var(--quizlet-text-secondary)",
+      },
+      animation: {
+        "pulse-soft": "pulse-soft 2.5s ease-in-out infinite",
+        "glow": "glow 3s ease-in-out infinite",
+      },
+      keyframes: {
+        "pulse-soft": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.85" },
+        },
+        "glow": {
+          "0%, 100%": { boxShadow: "0 0 12px rgba(16, 191, 212, 0.2)" },
+          "50%": { boxShadow: "0 0 24px rgba(16, 191, 212, 0.35)" },
+        },
       },
     },
   },

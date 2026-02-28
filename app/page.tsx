@@ -8,8 +8,7 @@ import {
   loadWrongAnswers,
   removeWordSet,
   removeWrongAnswer,
-  hasLoadedWordAssets,
-  setWordAssetsLoaded,
+  clearWordAssetsLoaded,
 } from "@/lib/storage";
 import { parseExcelFile } from "@/lib/excelParser";
 import { parsePdfFile } from "@/lib/pdfParser";
@@ -35,14 +34,37 @@ export default function Home() {
   const [isUploading, setIsUploading] = useState(false);
   const [isCreatingWordSet, setIsCreatingWordSet] = useState(false);
   const [isEditingWordSet, setIsEditingWordSet] = useState(false);
-  const [isLoadingWordAssets, setIsLoadingWordAssets] = useState(false);
-  const [hasLoadedWordAssetsOnce, setHasLoadedWordAssetsOnce] = useState(false);
+  const [isWordAssetsSelectorOpen, setIsWordAssetsSelectorOpen] = useState(false);
+  const [wordAssetsList, setWordAssetsList] = useState<WordSet[] | null>(null);
+  const [selectedAssetKeysForLoad, setSelectedAssetKeysForLoad] = useState<Set<string>>(new Set());
+  const [isMultiDeleteMode, setIsMultiDeleteMode] = useState(false);
+  const [selectedWordSetIdsForDelete, setSelectedWordSetIdsForDelete] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     setWordSets(loadWordSets());
     setWrongAnswers(loadWrongAnswers());
-    setHasLoadedWordAssetsOnce(hasLoadedWordAssets());
   }, []);
+
+  // word_assets 선택 모달 열릴 때 JSON 불러오기
+  useEffect(() => {
+    if (!isWordAssetsSelectorOpen) return;
+    let cancelled = false;
+    setWordAssetsList(null);
+    setSelectedAssetKeysForLoad(new Set());
+    (async () => {
+      try {
+        const res = await fetch("/word_assets_word_sets.json");
+        if (!res.ok || cancelled) return;
+        const { wordSets: loaded } = (await res.json()) as { wordSets: WordSet[] };
+        if (!cancelled && loaded?.length) setWordAssetsList(loaded);
+      } catch {
+        if (!cancelled) setWordAssetsList([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isWordAssetsSelectorOpen]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -100,42 +122,52 @@ export default function Home() {
     return shuffled;
   };
 
-  const handleLoadWordAssets = async () => {
-    setIsLoadingWordAssets(true);
-    try {
-      const res = await fetch("/word_assets_word_sets.json");
-      if (!res.ok) {
-        alert("word_assets 단어장 파일을 찾을 수 없습니다. 먼저 npm run build:word-sets 를 실행하세요.");
-        return;
-      }
-      const { wordSets: loaded } = (await res.json()) as { wordSets: WordSet[] };
-      if (!loaded?.length) {
-        alert("불러올 단어장이 없습니다.");
-        return;
-      }
-      const existing = loadWordSets();
-      const maxDay = existing.length > 0 ? Math.max(...existing.map((s) => s.day)) : 0;
-      const withNewDays = loaded.map((ws, i) => ({
-        ...ws,
-        id: ws.id || `wordset-assets-${Date.now()}-${i}`,
-        day: maxDay + i + 1,
-        name: ws.name || `단어장 ${maxDay + i + 1}`,
-        words: ws.words.map((w, j) => ({
-          ...w,
-          id: w.id || `word-${maxDay + i + 1}-${j}-${Date.now()}`,
-        })),
-      }));
-      const merged = [...existing, ...withNewDays];
-      saveWordSets(merged);
-      setWordSets(merged);
-      setWordAssetsLoaded();
-      setHasLoadedWordAssetsOnce(true);
-      alert(`${withNewDays.length}개 단어장을 불러왔습니다.`);
-    } catch (e) {
-      alert("불러오기 실패: " + (e instanceof Error ? e.message : String(e)));
-    } finally {
-      setIsLoadingWordAssets(false);
+  const handleOpenWordAssetsSelector = () => {
+    setIsWordAssetsSelectorOpen(true);
+  };
+
+  const handleConfirmWordAssetsSelection = () => {
+    if (!wordAssetsList?.length || selectedAssetKeysForLoad.size === 0) {
+      alert("불러올 단어장을 하나 이상 선택해 주세요.");
+      return;
     }
+    const toAdd = wordAssetsList.filter((ws) => {
+      const key = ws.assetKey ?? ws.id;
+      return selectedAssetKeysForLoad.has(key);
+    });
+    if (toAdd.length === 0) {
+      alert("선택한 단어장을 불러올 수 없습니다.");
+      return;
+    }
+    const existing = loadWordSets();
+    const maxDay = existing.length > 0 ? Math.max(...existing.map((s) => s.day)) : 0;
+    const withNewDays = toAdd.map((ws, i) => ({
+      ...ws,
+      id: ws.id || `wordset-assets-${Date.now()}-${i}`,
+      day: maxDay + i + 1,
+      name: ws.name || `단어장 ${maxDay + i + 1}`,
+      assetKey: ws.assetKey,
+      words: ws.words.map((w, j) => ({
+        ...w,
+        id: w.id || `word-${maxDay + i + 1}-${j}-${Date.now()}`,
+      })),
+    }));
+    const merged = [...existing, ...withNewDays];
+    saveWordSets(merged);
+    setWordSets(merged);
+    setIsWordAssetsSelectorOpen(false);
+    setWordAssetsList(null);
+    setSelectedAssetKeysForLoad(new Set());
+    alert(`${withNewDays.length}개 단어장을 불러왔습니다.`);
+  };
+
+  const toggleAssetKeySelection = (assetKey: string) => {
+    setSelectedAssetKeysForLoad((prev) => {
+      const next = new Set(prev);
+      if (next.has(assetKey)) next.delete(assetKey);
+      else next.add(assetKey);
+      return next;
+    });
   };
 
   const handleDayClick = (wordSet: WordSet) => {
@@ -187,14 +219,48 @@ export default function Home() {
     removeWordSet(wordSetId);
     const updatedSets = loadWordSets();
     setWordSets(updatedSets);
-    // 해당 단어장의 오답도 함께 삭제
-    const updatedWrongAnswers = wrongAnswers.filter(
-      (wa) => !updatedSets.some((ws) => ws.id === wordSetId && ws.day === wa.day)
+    if (updatedSets.length === 0) {
+      clearWordAssetsLoaded();
+    }
+    // 남은 단어장에 해당하는 오답만 유지
+    const updatedWrongAnswers = wrongAnswers.filter((wa) =>
+      updatedSets.some((ws) => ws.day === wa.day)
     );
     setWrongAnswers(updatedWrongAnswers);
     if (typeof window !== "undefined") {
       localStorage.setItem("wrong-answers", JSON.stringify(updatedWrongAnswers));
     }
+  };
+
+  const toggleWordSetForDelete = (wordSetId: string) => {
+    setSelectedWordSetIdsForDelete((prev) => {
+      const next = new Set(prev);
+      if (next.has(wordSetId)) next.delete(wordSetId);
+      else next.add(wordSetId);
+      return next;
+    });
+  };
+
+  const handleDeleteSelectedWordSets = () => {
+    const count = selectedWordSetIdsForDelete.size;
+    if (count === 0) return;
+    if (!confirm(`선택한 ${count}개 단어장을 삭제하시겠습니까?`)) return;
+    selectedWordSetIdsForDelete.forEach((id) => removeWordSet(id));
+    const updatedSets = loadWordSets();
+    setWordSets(updatedSets);
+    if (updatedSets.length === 0) {
+      clearWordAssetsLoaded();
+    }
+    const updatedWrongAnswers = wrongAnswers.filter((wa) =>
+      updatedSets.some((ws) => ws.day === wa.day)
+    );
+    setWrongAnswers(updatedWrongAnswers);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("wrong-answers", JSON.stringify(updatedWrongAnswers));
+    }
+    setSelectedWordSetIdsForDelete(new Set());
+    setIsMultiDeleteMode(false);
+    alert(`${count}개 단어장이 삭제되었습니다.`);
   };
 
   const handleRenameWordSet = (wordSetId: string, newName: string) => {
@@ -481,113 +547,254 @@ export default function Home() {
     );
   }
 
-  // 메인 화면
+  // 메인 화면 (퀴즐렛 구성 + 어몽어스 분위기)
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 text-center">
-        <div className="flex items-center justify-center gap-3 mb-3">
-          <CrewmateIcon color="red" size={56} />
-          <h1 className="text-4xl md:text-5xl font-extrabold text-white drop-shadow-[2px_2px_0_#000]">
-          WORD IMPOSTER
+    <div className="min-h-screen bg-bg-space">
+      {/* 상단 헤더 (어몽어스 톤) */}
+      <header className="sticky top-0 z-10 bg-bg-space/95 border-b border-white/10 backdrop-blur">
+        <div className="container mx-auto px-4 py-3 max-w-5xl flex items-center justify-between">
+          <h1 className="font-display text-xl font-bold text-white">
+            WORD IMPOSTER
           </h1>
-          <CrewmateIcon color="cyan" size={56} />
-        </div>
-        <p className="text-lg font-medium text-gray-300">One word is lying. Can you find it?</p>
-      </div>
-
-      {/* 파일 업로드 */}
-      <Card className="mb-8 border-2 border-dashed border-crewmate-cyan/50 hover:border-crewmate-cyan transition-colors">
-        <CardContent className="p-6">
-          <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-crewmate-cyan/60 p-8 transition-all hover:bg-crewmate-cyan/5 hover:border-crewmate-cyan">
-            <Upload className="mb-4 h-12 w-12 text-crewmate-cyan" />
-            <span className="mb-2 text-xl font-bold text-gray-900">
-              엑셀 / CSV 업로드
-            </span>
-            <span className="text-base font-medium text-gray-600 text-center">
-              엑셀·CSV: 1열 영어, 2열 한글
-            </span>
-            <input
-              type="file"
-              accept=".xlsx,.xls,.csv,.pdf"
-              onChange={handleFileUpload}
-              disabled={isUploading}
-              className="hidden"
-            />
-            {isUploading && (
-              <p className="mt-2 text-sm text-crewmate-cyan font-semibold">업로드 중...</p>
-            )}
-          </label>
-        </CardContent>
-      </Card>
-
-      {/* Day별 단어장 목록 */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <h2 className="text-3xl font-bold text-white flex items-center gap-2">
-            <span className="w-2 h-8 bg-crewmate-lime rounded-full" />
-            단어장 목록
-          </h2>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Button
               variant="outline"
               size="sm"
-              onClick={handleLoadWordAssets}
-              disabled={isLoadingWordAssets || hasLoadedWordAssetsOnce}
+              onClick={handleOpenWordAssetsSelector}
+              className="border-crewmate-cyan/50 text-gray-200 hover:bg-crewmate-cyan/20 hover:border-crewmate-cyan"
             >
-              {isLoadingWordAssets
-                ? "불러오는 중…"
-                : hasLoadedWordAssetsOnce
-                  ? "이미 불러옴"
-                  : "word_assets 단어장 불러오기"}
+              word_assets 불러오기
             </Button>
             <Button
               onClick={() => setIsCreatingWordSet(true)}
               size="sm"
+              className="bg-crewmate-red hover:opacity-90 text-white border-2 border-black shadow-[2px_2px_0_0_#000]"
             >
-              <Plus className="mr-2 h-4 w-4" />
-              새 단어장 만들기
+              <Plus className="mr-1.5 h-4 w-4" />
+              만들기
             </Button>
           </div>
         </div>
-        {wordSets.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {wordSets.map((wordSet, index) => (
-              <DayCard
-                key={wordSet.id}
-                wordSet={wordSet}
-                index={index}
-                onClick={() => handleDayClick(wordSet)}
-                onDelete={handleDeleteWordSet}
-                onRename={handleRenameWordSet}
-              />
-            ))}
+      </header>
+
+      <main className="container mx-auto px-4 py-6 max-w-5xl">
+        {/* 단어장 추가 란: 한 카드 안에 업로드·만들기·불러오기 (어몽어스 컬러) */}
+        <section className="mb-8">
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
+            단어장 추가
+          </h2>
+          <div className="bg-bg-card rounded-xl border-2 border-black shadow-[4px_4px_0_0_#000] overflow-hidden">
+            <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-300">
+              <label className="flex flex-col items-center justify-center p-6 cursor-pointer hover:bg-crewmate-cyan/10 transition-colors">
+                <Upload className="h-10 w-10 text-crewmate-cyan mb-2" />
+                <span className="font-semibold text-gray-900">파일 업로드</span>
+                <span className="text-xs text-gray-600 mt-0.5 text-center">엑셀·CSV·PDF</span>
+                <input
+                  type="file"
+                  accept=".xlsx,.xls,.csv,.pdf"
+                  onChange={handleFileUpload}
+                  disabled={isUploading}
+                  className="hidden"
+                />
+                {isUploading && <span className="text-xs text-crewmate-cyan font-medium mt-1">업로드 중...</span>}
+              </label>
+              <button
+                type="button"
+                onClick={() => setIsCreatingWordSet(true)}
+                className="flex flex-col items-center justify-center p-6 hover:bg-crewmate-lime/10 transition-colors"
+              >
+                <Plus className="h-10 w-10 text-crewmate-lime mb-2" />
+                <span className="font-semibold text-gray-900">빈 단어장 만들기</span>
+                <span className="text-xs text-gray-600 mt-0.5">직접 입력</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleOpenWordAssetsSelector}
+                className="flex flex-col items-center justify-center p-6 hover:bg-crewmate-yellow/10 transition-colors"
+              >
+                <BookOpen className="h-10 w-10 text-crewmate-yellow mb-2" />
+                <span className="font-semibold text-gray-900">word_assets 불러오기</span>
+                <span className="text-xs text-gray-600 mt-0.5">선택해서 불러오기</span>
+              </button>
+            </div>
           </div>
-        ) : (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <CrewmateIcon color="yellow" size={80} className="mb-4" />
-              <p className="text-gray-600 mb-4 font-medium">아직 단어장이 없어요. 크루를 모아볼까요?</p>
-              <Button onClick={() => setIsCreatingWordSet(true)}>
+        </section>
+
+        {/* 내 단어장 */}
+        <section className="mb-8">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest">
+              내 단어장
+            </h2>
+            {wordSets.length > 0 &&
+              (isMultiDeleteMode ? (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setIsMultiDeleteMode(false);
+                      setSelectedWordSetIdsForDelete(new Set());
+                    }}
+                    className="border-gray-400 text-gray-700"
+                  >
+                    취소
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleDeleteSelectedWordSets}
+                    disabled={selectedWordSetIdsForDelete.size === 0}
+                    className="bg-crewmate-red text-white border-2 border-black shadow-[2px_2px_0_0_#000] hover:opacity-90 disabled:opacity-50"
+                  >
+                    선택한 {selectedWordSetIdsForDelete.size}개 삭제
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsMultiDeleteMode(true)}
+                  className="border-crewmate-red/50 text-gray-200 hover:bg-crewmate-red/20 hover:border-crewmate-red"
+                >
+                  여러 개 삭제
+                </Button>
+              ))}
+          </div>
+          {wordSets.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {wordSets.map((wordSet, index) => (
+                <DayCard
+                  key={wordSet.id}
+                  wordSet={wordSet}
+                  index={index}
+                  onClick={() => handleDayClick(wordSet)}
+                  onDelete={handleDeleteWordSet}
+                  onRename={handleRenameWordSet}
+                  selectionMode={isMultiDeleteMode}
+                  selected={selectedWordSetIdsForDelete.has(wordSet.id)}
+                  onToggleSelect={() => toggleWordSetForDelete(wordSet.id)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-bg-card rounded-xl border-2 border-dashed border-crewmate-cyan/50 p-12 text-center">
+              <CrewmateIcon color="yellow" size={64} className="mx-auto mb-4" />
+              <p className="text-gray-600 mb-4">아직 단어장이 없어요. 크루를 모아볼까요?</p>
+              <Button
+                onClick={() => setIsCreatingWordSet(true)}
+                className="bg-crewmate-red text-white border-2 border-black shadow-[2px_2px_0_0_#000]"
+              >
                 <Plus className="mr-2 h-4 w-4" />
-                첫 번째 단어장 만들기
+                첫 단어장 만들기
               </Button>
+            </div>
+          )}
+        </section>
+
+        {/* 오답 관리 */}
+        <section>
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
+            오답 관리
+          </h2>
+          <WrongAnswersList
+            wrongAnswers={wrongAnswers}
+            onRemove={handleRemoveWrongAnswer}
+            onStudy={handleWrongAnswerStudy}
+          />
+        </section>
+      </main>
+
+      {/* word_assets 단어장 선택 모달 */}
+      {isWordAssetsSelectorOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+          onClick={() => setIsWordAssetsSelectorOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="word-assets-modal-title"
+        >
+          <Card
+            className="w-full max-w-lg max-h-[85vh] flex flex-col border-2 border-black shadow-[6px_6px_0_0_#000] bg-bg-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <CardContent className="p-5 flex flex-col flex-1 min-h-0">
+              <h2 id="word-assets-modal-title" className="text-lg font-bold text-gray-900 mb-4">
+                word_assets 단어장 선택
+              </h2>
+              <p className="text-sm text-gray-600 mb-3">
+                불러올 단어장을 선택하세요. 이미 불러온 단어장은 선택할 수 없습니다.
+              </p>
+              <div className="flex-1 overflow-y-auto space-y-2 mb-4 min-h-0">
+                {wordAssetsList === null ? (
+                  <p className="text-gray-500 py-4">불러오는 중…</p>
+                ) : wordAssetsList.length === 0 ? (
+                  <p className="text-gray-500 py-4">
+                    단어장이 없습니다. npm run build:word-sets 를 실행하세요.
+                  </p>
+                ) : (
+                  wordAssetsList.map((ws) => {
+                    const key = ws.assetKey ?? ws.id;
+                    const alreadyLoaded = Boolean(
+                      key && wordSets.some((s) => s.assetKey === key)
+                    );
+                    return (
+                      <label
+                        key={key}
+                        className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-colors ${
+                          alreadyLoaded
+                            ? "bg-gray-100 border-gray-300 cursor-not-allowed opacity-75"
+                            : "bg-white border-gray-200 cursor-pointer hover:border-crewmate-cyan/50"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedAssetKeysForLoad.has(key)}
+                          disabled={alreadyLoaded}
+                          onChange={() => toggleAssetKeySelection(key)}
+                          className="rounded border-gray-400 text-crewmate-cyan focus:ring-crewmate-cyan"
+                        />
+                        <span className="font-medium text-gray-900 flex-1 truncate">
+                          {ws.name}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          {ws.words.length}개 단어
+                        </span>
+                        {alreadyLoaded && (
+                          <span className="text-xs font-medium text-gray-500 bg-gray-200 px-2 py-0.5 rounded">
+                            이미 불러옴
+                          </span>
+                        )}
+                      </label>
+                    );
+                  })
+                )}
+              </div>
+              <div className="flex gap-2 justify-end pt-2 border-t border-gray-200">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsWordAssetsSelectorOpen(false)}
+                  className="border-gray-400"
+                >
+                  취소
+                </Button>
+                <Button
+                  onClick={handleConfirmWordAssetsSelection}
+                  disabled={
+                    wordAssetsList === null ||
+                    wordAssetsList.length === 0 ||
+                    selectedAssetKeysForLoad.size === 0
+                  }
+                  className="bg-crewmate-cyan text-white border-2 border-black shadow-[2px_2px_0_0_#000] hover:opacity-90"
+                >
+                  선택한 단어장 불러오기
+                  {selectedAssetKeysForLoad.size > 0 &&
+                    ` (${selectedAssetKeysForLoad.size}개)`}
+                </Button>
+              </div>
             </CardContent>
           </Card>
-        )}
-      </div>
-
-      {/* 오답 목록 */}
-      <div className="mb-8">
-        <h2 className="mb-4 text-3xl font-bold text-white flex items-center gap-2">
-          <span className="w-2 h-8 bg-crewmate-orange rounded-full" />
-          오답 관리
-        </h2>
-        <WrongAnswersList
-          wrongAnswers={wrongAnswers}
-          onRemove={handleRemoveWrongAnswer}
-          onStudy={handleWrongAnswerStudy}
-        />
-      </div>
+        </div>
+      )}
     </div>
   );
 }

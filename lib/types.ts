@@ -11,6 +11,8 @@ export interface WordSet {
   name: string;
   words: Word[];
   createdAt: string;
+  /** word_assets에서 온 단어장일 때만 있음. 같은 단어장을 다시 불러올 때 사용 */
+  assetKey?: string;
 }
 
 export interface WrongAnswer {

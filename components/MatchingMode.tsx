@@ -147,20 +147,22 @@ export function MatchingMode({
 
   if (isCompleted) {
     const totalCount = words.length;
+    // 정답 = 전체 - 오답(한 번이라도 틀린 단어 수), 정답률과 오답 개수 일치하도록 재계산
+    const displayCorrect = Math.max(0, totalCount - wrongCount);
     const accuracy =
-      totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
+      totalCount > 0 ? Math.round((displayCorrect / totalCount) * 100) : 0;
     return (
       <div className="flex flex-col items-center justify-center space-y-6 py-12">
         <div className="text-center">
           <h2 className="text-4xl font-bold text-white mb-4">학습 완료! 🎉</h2>
           <p className="text-xl font-semibold text-gray-300 mb-2">
-            정답률: {accuracy}% ({correctCount}/{totalCount})
+            정답률: {accuracy}% ({displayCorrect}/{totalCount})
           </p>
           {wrongCount > 0 && (
             <p className="text-lg text-red-600">오답: {wrongCount}개</p>
           )}
         </div>
-        <Button onClick={() => onComplete(correctCount, totalCount)} size="lg">
+        <Button onClick={() => onComplete(displayCorrect, totalCount)} size="lg">
           확인
         </Button>
       </div>
@@ -267,12 +269,12 @@ export function MatchingMode({
           <div className="bg-white rounded-2xl p-8 text-center shadow-xl">
             {showResult === "correct" ? (
               <>
-                <CheckCircle2 className="h-16 w-16 text-green-600 mx-auto mb-4" />
-                <p className="text-2xl font-bold text-green-600">정답! 🎉</p>
+                <CheckCircle2 className="h-5 w-16 text-green-600 mx-auto mb-4" />
+                <p className="text-2xl font-bold text-green-600">정답!</p>
               </>
             ) : (
               <>
-                <XCircle className="h-16 w-16 text-red-600 mx-auto mb-4" />
+                <XCircle className="h-5 w-16 text-red-600 mx-auto mb-4" />
                 <p className="text-2xl font-bold text-red-600">오답</p>
               </>
             )}
@@ -280,7 +282,7 @@ export function MatchingMode({
         </div>
       )}
 
-      <div className="flex justify-center gap-6 text-lg font-semibold">
+      <div className="flex justify-center gap-2 text-lg font-semibold">
         <span className="text-green-600">정답: {correctCount}</span>
         <span className="text-red-600">오답: {wrongCount}</span>
       </div>

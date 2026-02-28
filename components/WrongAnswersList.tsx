@@ -19,7 +19,7 @@ export function WrongAnswersList({
 }: WrongAnswersListProps) {
   if (wrongAnswers.length === 0) {
     return (
-      <Card>
+      <Card className="bg-bg-card border-2 border-black">
         <CardContent className="flex flex-col items-center justify-center py-12">
           <p className="text-gray-600 font-medium">오답이 없습니다. 모두 정답이에요! 🎉</p>
         </CardContent>
@@ -30,17 +30,21 @@ export function WrongAnswersList({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-2xl font-bold text-white">
+        <h3 className="text-lg font-semibold text-white">
           오답 단어 ({wrongAnswers.length}개)
         </h3>
-        <Button onClick={() => onStudy(wrongAnswers)} size="sm">
+        <Button
+          onClick={() => onStudy(wrongAnswers)}
+          size="sm"
+          className="bg-crewmate-red text-white border-2 border-black shadow-[2px_2px_0_0_#000] hover:opacity-90"
+        >
           오답 공부하기
         </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {wrongAnswers.map((wrong) => (
-          <Card key={wrong.wordId}>
+          <Card key={wrong.wordId} className="bg-bg-card border-2 border-black shadow-[4px_4px_0_0_#000]">
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">

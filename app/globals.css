@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Among Us crewmate palette (참고: Crewmate Model 스펙) */
+/* Among Us crewmate palette + unique UI */
 :root {
   --crewmate-red: #df3434;
   --crewmate-lime: #93da5c;
@@ -12,25 +12,62 @@
   --crewmate-pink: #fa81c9;
   --visor-blue: #b4e2f5;
   --crewmate-stroke: #000000;
-  --bg-space: #2d2d35;
-  --bg-card: #f3f3f3;
-  --background: #2d2d35;
+  --bg-space: #1a1b23;
+  --bg-space-top: #25263a;
+  --bg-card: #f2f2f0;
+  --background: #1a1b23;
   --foreground: #1a1a1a;
   --text-on-dark: #f3f3f3;
   --text-muted: #9ca3af;
+  /* 퀴즐렛 스타일 메인용 */
+  --quizlet-bg: #f6f7fb;
+  --quizlet-card: #ffffff;
+  --quizlet-border: #e4e6eb;
+  --quizlet-primary: #4255ff;
+  --quizlet-primary-hover: #3144d6;
+  --quizlet-text: #2e3856;
+  --quizlet-text-secondary: #586380;
 }
 
+/* 유니크 배경: 그라데이션 + 대각선 그리드 + 은은한 점 패턴 */
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-nunito), system-ui, sans-serif;
   line-height: 1.6;
   min-height: 100vh;
+  background-image:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(16, 191, 212, 0.08), transparent 50%),
+    repeating-linear-gradient(
+      105deg,
+      transparent,
+      transparent 40px,
+      rgba(255, 255, 255, 0.02) 40px,
+      rgba(255, 255, 255, 0.02) 41px
+    ),
+    linear-gradient(180deg, var(--bg-space-top) 0%, var(--bg-space) 30%, #15161d 100%);
+  background-attachment: fixed;
+}
+
+::selection {
+  background: rgba(16, 191, 212, 0.4);
+  color: #fff;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  .font-display {
+    font-family: var(--font-orbitron), var(--font-nunito), sans-serif;
+  }
+  .title-glow {
+    text-shadow:
+      0 0 20px rgba(16, 191, 212, 0.3),
+      2px 2px 0 #000;
+  }
+  .card-notch {
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
   }
 }
 

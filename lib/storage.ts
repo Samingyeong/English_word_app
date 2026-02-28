@@ -4,6 +4,7 @@ const STORAGE_KEYS = {
   WORD_SETS: "word-sets",
   WRONG_ANSWERS: "wrong-answers",
   WORD_ASSETS_LOADED: "word-assets-loaded",
+  DELETED_ASSET_KEYS: "deleted-asset-keys",
 } as const;
 
 export function hasLoadedWordAssets(): boolean {
@@ -14,6 +15,37 @@ export function hasLoadedWordAssets(): boolean {
 export function setWordAssetsLoaded(): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(STORAGE_KEYS.WORD_ASSETS_LOADED, "true");
+}
+
+export function clearWordAssetsLoaded(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(STORAGE_KEYS.WORD_ASSETS_LOADED);
+}
+
+export function getDeletedAssetKeys(): string[] {
+  if (typeof window === "undefined") return [];
+  const data = localStorage.getItem(STORAGE_KEYS.DELETED_ASSET_KEYS);
+  if (!data) return [];
+  try {
+    const parsed = JSON.parse(data) as unknown;
+    return Array.isArray(parsed) ? parsed.filter((k): k is string => typeof k === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+export function addDeletedAssetKey(assetKey: string): void {
+  if (typeof window === "undefined") return;
+  const keys = getDeletedAssetKeys();
+  if (keys.includes(assetKey)) return;
+  keys.push(assetKey);
+  localStorage.setItem(STORAGE_KEYS.DELETED_ASSET_KEYS, JSON.stringify(keys));
+}
+
+export function removeDeletedAssetKeys(keysToRemove: string[]): void {
+  if (typeof window === "undefined") return;
+  const keys = getDeletedAssetKeys().filter((k) => !keysToRemove.includes(k));
+  localStorage.setItem(STORAGE_KEYS.DELETED_ASSET_KEYS, JSON.stringify(keys));
 }
 
 export function saveWordSets(wordSets: WordSet[]): void {
