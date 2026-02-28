@@ -9,8 +9,8 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "영단어 암기 앱",
-  description: "엑셀 파일로 영단어를 외우는 플래시카드 앱",
+  title: "WORD IMPOSTER",
+  description: "One word is lying. Can you find it?",
 };
 
 export default function RootLayout({

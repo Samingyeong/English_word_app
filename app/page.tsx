@@ -53,7 +53,7 @@ export default function Home() {
     const isCsv = name.endsWith(".csv");
     const isExcel = /\.(xlsx|xls)$/.test(name);
     if (!isPdf && !isCsv && !isExcel) {
-      alert("엑셀(.xlsx, .xls), CSV(.csv) 또는 PDF(.pdf) 파일만 업로드할 수 있습니다.");
+      alert("엑셀(.xlsx, .xls), CSV(.csv) 파일만 업로드할 수 있습니다.");
       e.target.value = "";
       return;
     }
@@ -492,7 +492,7 @@ export default function Home() {
           </h1>
           <CrewmateIcon color="cyan" size={56} />
         </div>
-        <p className="text-lg font-medium text-gray-300">엑셀·PDF 단어장을 올리고 크루와 함께 외워보세요!</p>
+        <p className="text-lg font-medium text-gray-300">One word is lying. Can you find it?</p>
       </div>
 
       {/* 파일 업로드 */}
@@ -501,10 +501,10 @@ export default function Home() {
           <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-crewmate-cyan/60 p-8 transition-all hover:bg-crewmate-cyan/5 hover:border-crewmate-cyan">
             <Upload className="mb-4 h-12 w-12 text-crewmate-cyan" />
             <span className="mb-2 text-xl font-bold text-gray-900">
-              엑셀 / CSV / PDF 업로드
+              엑셀 / CSV 업로드
             </span>
             <span className="text-base font-medium text-gray-600 text-center">
-              엑셀·CSV: 1열 영어, 2열 한글 · PDF: 번호. 영단어 한글뜻 형식
+              엑셀·CSV: 1열 영어, 2열 한글
             </span>
             <input
               type="file"
