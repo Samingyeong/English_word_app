@@ -12,9 +12,10 @@ interface TypingModeProps {
   day: number;
   direction: FlashcardDirection;
   onComplete: (correctCount: number, totalCount: number) => void;
+  onWordCorrect?: (wordId: string) => void;
 }
 
-export function TypingMode({ words, day, direction, onComplete }: TypingModeProps) {
+export function TypingMode({ words, day, direction, onComplete, onWordCorrect }: TypingModeProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [input, setInput] = useState("");
   const [correctCount, setCorrectCount] = useState(0);
@@ -123,6 +124,7 @@ export function TypingMode({ words, day, direction, onComplete }: TypingModeProp
 
     if (isAnswerCorrect) {
       setCorrectCount((prev) => prev + 1);
+      onWordCorrect?.(currentWord.id);
     } else {
       addWrongAnswer(
         currentWord.id,

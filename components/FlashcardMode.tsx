@@ -12,6 +12,7 @@ interface FlashcardModeProps {
   day: number;
   direction: FlashcardDirection;
   onComplete: (correctCount: number, totalCount: number) => void;
+  onWordCorrect?: (wordId: string) => void;
 }
 
 export function FlashcardMode({
@@ -19,6 +20,7 @@ export function FlashcardMode({
   day,
   direction,
   onComplete,
+  onWordCorrect,
 }: FlashcardModeProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -92,6 +94,7 @@ export function FlashcardMode({
 
   const handleCorrect = () => {
     setCorrectCount((prev) => prev + 1);
+    if (currentWord) onWordCorrect?.(currentWord.id);
     nextCard();
   };
 

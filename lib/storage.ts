@@ -3,7 +3,18 @@ import { WordSet, WrongAnswer } from "./types";
 const STORAGE_KEYS = {
   WORD_SETS: "word-sets",
   WRONG_ANSWERS: "wrong-answers",
+  WORD_ASSETS_LOADED: "word-assets-loaded",
 } as const;
+
+export function hasLoadedWordAssets(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(STORAGE_KEYS.WORD_ASSETS_LOADED) === "true";
+}
+
+export function setWordAssetsLoaded(): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(STORAGE_KEYS.WORD_ASSETS_LOADED, "true");
+}
 
 export function saveWordSets(wordSets: WordSet[]): void {
   if (typeof window === "undefined") return;

@@ -11,6 +11,7 @@ interface MatchingModeProps {
   words: Word[];
   day: number;
   onComplete: (correctCount: number, totalCount: number) => void;
+  onWordCorrect?: (wordId: string) => void;
 }
 
 interface CardItem {
@@ -24,6 +25,7 @@ export function MatchingMode({
   words,
   day,
   onComplete,
+  onWordCorrect,
 }: MatchingModeProps) {
   const [displayWords, setDisplayWords] = useState<Word[]>([]);
   const [selectedKorean, setSelectedKorean] = useState<string | null>(null);
@@ -33,6 +35,7 @@ export function MatchingMode({
   const [isCompleted, setIsCompleted] = useState(false);
   const [showResult, setShowResult] = useState<"correct" | "wrong" | null>(null);
   const queueRef = useRef<Word[]>([]);
+  const wrongWordIdsRef = useRef<Set<string>>(new Set());
 
   // 초기화
   useEffect(() => {
@@ -45,6 +48,7 @@ export function MatchingMode({
     setCorrectCount(0);
     setWrongCount(0);
     setIsCompleted(false);
+    wrongWordIdsRef.current = new Set();
   }, [words]);
 
   // 현재 4쌍 - 항상 같은 displayWords에서, 순서만 섞음
@@ -97,6 +101,7 @@ export function MatchingMode({
     if (koreanCard.wordId === englishCard.wordId) {
       setShowResult("correct");
       setCorrectCount((prev) => prev + 1);
+      onWordCorrect?.(koreanCard.wordId);
 
       // 짧은 피드백(0.5초) 후 듀오링고처럼: 맞춘 쌍 자리에 큐에서 새 단어로 교체
       setTimeout(() => {
@@ -117,9 +122,12 @@ export function MatchingMode({
       }, 500);
     } else {
       setShowResult("wrong");
-      setWrongCount((prev) => prev + 1);
-      const word = words.find((w) => w.id === koreanCard.wordId);
-      if (word) addWrongAnswer(word.id, word.english, word.korean, day);
+      if (!wrongWordIdsRef.current.has(koreanCard.wordId)) {
+        wrongWordIdsRef.current.add(koreanCard.wordId);
+        setWrongCount((prev) => prev + 1);
+        const word = words.find((w) => w.id === koreanCard.wordId);
+        if (word) addWrongAnswer(word.id, word.english, word.korean, day);
+      }
       setTimeout(() => {
         setSelectedKorean(null);
         setSelectedEnglish(null);

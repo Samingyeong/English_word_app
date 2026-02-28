@@ -7,8 +7,13 @@ import {
   saveWordSets,
   loadWrongAnswers,
   removeWordSet,
+  removeWrongAnswer,
+  hasLoadedWordAssets,
+  setWordAssetsLoaded,
 } from "@/lib/storage";
 import { parseExcelFile } from "@/lib/excelParser";
+import { parsePdfFile } from "@/lib/pdfParser";
+import { parseCsvFile } from "@/lib/csvParser";
 import { exportWordsToExcel } from "@/lib/excelExport";
 import { DayCard } from "@/components/DayCard";
 import { FlashcardMode } from "@/components/FlashcardMode";
@@ -29,19 +34,36 @@ export default function Home() {
   const [isUploading, setIsUploading] = useState(false);
   const [isCreatingWordSet, setIsCreatingWordSet] = useState(false);
   const [isEditingWordSet, setIsEditingWordSet] = useState(false);
+  const [isLoadingWordAssets, setIsLoadingWordAssets] = useState(false);
+  const [hasLoadedWordAssetsOnce, setHasLoadedWordAssetsOnce] = useState(false);
 
   useEffect(() => {
     setWordSets(loadWordSets());
     setWrongAnswers(loadWrongAnswers());
+    setHasLoadedWordAssetsOnce(hasLoadedWordAssets());
   }, []);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const name = file.name.toLowerCase();
+    const isPdf = name.endsWith(".pdf");
+    const isCsv = name.endsWith(".csv");
+    const isExcel = /\.(xlsx|xls)$/.test(name);
+    if (!isPdf && !isCsv && !isExcel) {
+      alert("엑셀(.xlsx, .xls), CSV(.csv) 또는 PDF(.pdf) 파일만 업로드할 수 있습니다.");
+      e.target.value = "";
+      return;
+    }
+
     setIsUploading(true);
     try {
-      const words = await parseExcelFile(file);
+      const words = isPdf
+        ? await parsePdfFile(file)
+        : isCsv
+        ? await parseCsvFile(file)
+        : await parseExcelFile(file);
       const existingSets = loadWordSets();
       const nextDay = existingSets.length > 0 
         ? Math.max(...existingSets.map(s => s.day)) + 1 
@@ -58,7 +80,7 @@ export default function Home() {
       const updatedSets = [...existingSets, newWordSet];
       saveWordSets(updatedSets);
       setWordSets(updatedSets);
-      alert(`Day ${nextDay} 단어장이 추가되었습니다! (${words.length}개 단어)`);
+      alert(`Day ${nextDay} 단어장이 추가되었습니다! (${words.length}개 단어)${isPdf ? " [PDF]" : isCsv ? " [CSV]" : ""}`);
     } catch (error) {
       alert(`오류: ${error instanceof Error ? error.message : "알 수 없는 오류"}`);
     } finally {
@@ -77,9 +99,52 @@ export default function Home() {
     return shuffled;
   };
 
+  const handleLoadWordAssets = async () => {
+    setIsLoadingWordAssets(true);
+    try {
+      const res = await fetch("/word_assets_word_sets.json");
+      if (!res.ok) {
+        alert("word_assets 단어장 파일을 찾을 수 없습니다. 먼저 npm run build:word-sets 를 실행하세요.");
+        return;
+      }
+      const { wordSets: loaded } = (await res.json()) as { wordSets: WordSet[] };
+      if (!loaded?.length) {
+        alert("불러올 단어장이 없습니다.");
+        return;
+      }
+      const existing = loadWordSets();
+      const maxDay = existing.length > 0 ? Math.max(...existing.map((s) => s.day)) : 0;
+      const withNewDays = loaded.map((ws, i) => ({
+        ...ws,
+        id: ws.id || `wordset-assets-${Date.now()}-${i}`,
+        day: maxDay + i + 1,
+        name: ws.name || `단어장 ${maxDay + i + 1}`,
+        words: ws.words.map((w, j) => ({
+          ...w,
+          id: w.id || `word-${maxDay + i + 1}-${j}-${Date.now()}`,
+        })),
+      }));
+      const merged = [...existing, ...withNewDays];
+      saveWordSets(merged);
+      setWordSets(merged);
+      setWordAssetsLoaded();
+      setHasLoadedWordAssetsOnce(true);
+      alert(`${withNewDays.length}개 단어장을 불러왔습니다.`);
+    } catch (e) {
+      alert("불러오기 실패: " + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setIsLoadingWordAssets(false);
+    }
+  };
+
   const handleDayClick = (wordSet: WordSet) => {
     setSelectedWordSet(wordSet);
     setStudyMode(null);
+  };
+
+  const handleWordCorrect = (wordId: string) => {
+    removeWrongAnswer(wordId);
+    setWrongAnswers(loadWrongAnswers());
   };
 
   const handleStudyComplete = (correctCount: number, totalCount: number) => {
@@ -389,6 +454,7 @@ export default function Home() {
             day={selectedWordSet.day}
             direction={flashcardDirection}
             onComplete={handleStudyComplete}
+            onWordCorrect={selectedWordSet.id === "wrong-answers" ? handleWordCorrect : undefined}
           />
         )}
 
@@ -398,6 +464,7 @@ export default function Home() {
             day={selectedWordSet.day}
             direction={flashcardDirection}
             onComplete={handleStudyComplete}
+            onWordCorrect={selectedWordSet.id === "wrong-answers" ? handleWordCorrect : undefined}
           />
         )}
 
@@ -406,6 +473,7 @@ export default function Home() {
             words={shuffleArray(selectedWordSet.words)}
             day={selectedWordSet.day}
             onComplete={handleStudyComplete}
+            onWordCorrect={selectedWordSet.id === "wrong-answers" ? handleWordCorrect : undefined}
           />
         )}
       </div>
@@ -419,7 +487,7 @@ export default function Home() {
         <h1 className="text-5xl font-bold text-gray-900 mb-3">
           영단어 암기 앱 📚
         </h1>
-        <p className="text-lg font-medium text-gray-700">엑셀 파일로 단어를 업로드하고 공부해보세요!</p>
+        <p className="text-lg font-medium text-gray-700">엑셀 또는 PDF 단어장을 업로드하고 공부해보세요!</p>
       </div>
 
       {/* 파일 업로드 */}
@@ -428,14 +496,14 @@ export default function Home() {
           <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-8 transition-colors hover:border-blue-400">
             <Upload className="mb-4 h-12 w-12 text-gray-400" />
             <span className="mb-2 text-xl font-bold text-gray-900">
-              엑셀 파일 업로드
+              엑셀 / CSV / PDF 업로드
             </span>
             <span className="text-base font-medium text-gray-700">
-              엑셀 파일 형식: 첫 번째 열(영어), 두 번째 열(한글)
+              엑셀·CSV: 1열 영어, 2열 한글 · PDF: 번호. 영단어 한글뜻 형식
             </span>
             <input
               type="file"
-              accept=".xlsx,.xls"
+              accept=".xlsx,.xls,.csv,.pdf"
               onChange={handleFileUpload}
               disabled={isUploading}
               className="hidden"
@@ -449,15 +517,29 @@ export default function Home() {
 
       {/* Day별 단어장 목록 */}
       <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <h2 className="text-3xl font-bold text-gray-900">단어장 목록</h2>
-          <Button
-            onClick={() => setIsCreatingWordSet(true)}
-            size="sm"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            새 단어장 만들기
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLoadWordAssets}
+              disabled={isLoadingWordAssets || hasLoadedWordAssetsOnce}
+            >
+              {isLoadingWordAssets
+                ? "불러오는 중…"
+                : hasLoadedWordAssetsOnce
+                  ? "이미 불러옴"
+                  : "word_assets 단어장 불러오기"}
+            </Button>
+            <Button
+              onClick={() => setIsCreatingWordSet(true)}
+              size="sm"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              새 단어장 만들기
+            </Button>
+          </div>
         </div>
         {wordSets.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
