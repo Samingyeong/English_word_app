@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { WordSet, Word, WrongAnswer, StudyMode, FlashcardDirection } from "@/lib/types";
 import {
   loadWordSets,
@@ -175,10 +175,10 @@ export default function Home() {
     setStudyMode(null);
   };
 
-  const handleWordCorrect = (wordId: string) => {
+  const handleWordCorrect = useCallback((wordId: string) => {
     removeWrongAnswer(wordId);
     setWrongAnswers(loadWrongAnswers());
-  };
+  }, []);
 
   const handleStudyComplete = (correctCount: number, totalCount: number) => {
     setSelectedWordSet(null);

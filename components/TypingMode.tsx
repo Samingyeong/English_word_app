@@ -71,6 +71,27 @@ export function TypingMode({ words, day, direction, onComplete, onWordCorrect }:
     setShowResult(false);
   }, [currentIndex]);
 
+  const handleNext = useCallback(() => {
+    setCurrentIndex((prev) => {
+      if (prev < words.length - 1) return prev + 1;
+      setIsCompleted(true);
+      return prev;
+    });
+  }, [words.length]);
+
+  // 정답/오답 표시 중에도 엔터로 다음 단어로 넘기기 (input이 disabled일 때는 key 이벤트가 input에 안 잡힘)
+  useEffect(() => {
+    if (!showResult) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleNext();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [showResult, handleNext]);
+
   if (isCompleted) {
     return (
       <div className="flex flex-col items-center justify-center space-y-6 py-12">
@@ -134,27 +155,6 @@ export function TypingMode({ words, day, direction, onComplete, onWordCorrect }:
       );
     }
   };
-
-  const handleNext = useCallback(() => {
-    setCurrentIndex((prev) => {
-      if (prev < words.length - 1) return prev + 1;
-      setIsCompleted(true);
-      return prev;
-    });
-  }, [words.length]);
-
-  // 정답/오답 표시 중에도 엔터로 다음 단어로 넘기기 (input이 disabled일 때는 key 이벤트가 input에 안 잡힘)
-  useEffect(() => {
-    if (!showResult) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handleNext();
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [showResult, handleNext]);
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {

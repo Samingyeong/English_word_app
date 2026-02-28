@@ -36,6 +36,8 @@ export function MatchingMode({
   const [showResult, setShowResult] = useState<"correct" | "wrong" | null>(null);
   const queueRef = useRef<Word[]>([]);
   const wrongWordIdsRef = useRef<Set<string>>(new Set());
+  const onWordCorrectRef = useRef(onWordCorrect);
+  onWordCorrectRef.current = onWordCorrect;
 
   // 초기화
   useEffect(() => {
@@ -101,7 +103,7 @@ export function MatchingMode({
     if (koreanCard.wordId === englishCard.wordId) {
       setShowResult("correct");
       setCorrectCount((prev) => prev + 1);
-      onWordCorrect?.(koreanCard.wordId);
+      onWordCorrectRef.current?.(koreanCard.wordId);
 
       // 짧은 피드백(0.5초) 후 듀오링고처럼: 맞춘 쌍 자리에 큐에서 새 단어로 교체
       setTimeout(() => {
