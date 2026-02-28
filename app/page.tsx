@@ -561,7 +561,7 @@ export default function Home() {
               variant="outline"
               size="sm"
               onClick={handleOpenWordAssetsSelector}
-              className="border-crewmate-cyan/50 text-gray-200 hover:bg-crewmate-cyan/20 hover:border-crewmate-cyan"
+              className="border-crewmate-cyan/50 bg-bg-card text-gray-900 hover:bg-crewmate-cyan/20 hover:border-crewmate-cyan"
             >
               word_assets 불러오기
             </Button>
@@ -612,9 +612,9 @@ export default function Home() {
                 onClick={handleOpenWordAssetsSelector}
                 className="flex flex-col items-center justify-center p-6 hover:bg-crewmate-yellow/10 transition-colors"
               >
-                <BookOpen className="h-10 w-10 text-crewmate-yellow mb-2" />
+                <BookOpen className="h-10 w-10 text-amber-600 mb-2" />
                 <span className="font-semibold text-gray-900">word_assets 불러오기</span>
-                <span className="text-xs text-gray-600 mt-0.5">선택해서 불러오기</span>
+                <span className="text-xs text-gray-700 mt-0.5">선택해서 불러오기</span>
               </button>
             </div>
           </div>
