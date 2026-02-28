@@ -56,9 +56,10 @@ async function main() {
 
   const files = fs.readdirSync(WORD_ASSETS_DIR);
   const pdfFiles = files.filter((f) => f.toLowerCase().endsWith(".pdf"));
-  const csvFiles = files.filter(
-    (f) => f.toLowerCase().endsWith(".csv") && f.includes("정리")
-  );
+  const csvFiles = files.filter((f) => {
+    if (!f.toLowerCase().endsWith(".csv")) return false;
+    return f.includes("정리") || f.toUpperCase().startsWith("LC");
+  });
   if (pdfFiles.length === 0 && csvFiles.length === 0) {
     console.error("word_assets에 PDF 또는 CSV(정리) 파일이 없습니다.");
     process.exit(1);
